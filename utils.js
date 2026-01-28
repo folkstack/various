@@ -1,22 +1,48 @@
 var fs = require('fs')
 Math.random = require('math-random')
 Error.stackTraceLimit = Infinity
-const tf = require('@tensorflow/tfjs')
-require('@tensorflow/tfjs-node-gpu')
+const tf = require('@tensorflow/tfjs-node')
+//require('@tensorflow/tfjs-node-gpu')
 var atob = require('arraybuffer-to-buffer')
-var $ = require('./cheatcode.js')
+//var $ = require('./cheatcode.js')
+var golden = require('../fibmodulo/goldenCalculus.js')
 
 tf.linear = rootOp
 var log = console.log
+const scalars = {}
+var disposal = []
 
 const init = initializers = {harmonic, orthoNormal, orthoUniform, orthoTruncated, randomNormal, randomUniform, randomTruncated}
 
-module.exports = {tautime, log, jsdft, dft, harmonic, phase, mag, tf, conv2d, gc, regularize, scalar, dispose, variable, initializers, init, combinatorial, nextTick, createRollMatrix, assert, a0}
+module.exports = {tautime, log, jsdft, dft, harmonic, phase, mag, tf, conv2d, gc, regularize, scalar, dispose, variable, initializers, init, combinatorial, nextTick, createRollMatrix, assert, a0, golden, gtlog, gtexp, shuffle}
+
+function shuffle(x){
+  if(x.shape[0] == 2 || x.shape[0] & 1) {
+    return tf.stack(tf.unstack(x).reverse())
+  }
+  else {
+    let s = tf.unstack(x)
+    let a = tf.stack(s.slice(0, s.length/2))
+    let b = tf.stack(s.slice(s.length/2, s.length))
+
+    return tf.stack([shuffle(b).reverse(), shuffle(a).reverse()]).reshape(x.shape)
+  }
+}
+
+const C = scalar(golden.getConstant())
+const R = scalar(20465)
+const P = scalar(9848)
+
+function gtexp(x){
+  return tf.pow(tf.exp(x).mul(tf.exp(C)), P.div(R)) 
+}
+
+function gtlog (x){
+  return x.log().mul(R).div(P).sub(C)
+}
 
 function rootOp(input){return input}
 
-const scalars = {}
-var disposal = []
 
 function phase(a,b){
   return tf.atan2(a, b)//.div(scalar(Math.PI).div(scalar(2)))
@@ -82,7 +108,7 @@ function configur8({
   config['mean'] = mean 
   config['dev'] = dev
   config['min'] = min 
-  config['mac'] = max
+  config['max'] = max
   config['type'] = type
   config['regularizer'] = regularizer
   config['activation'] = activation
@@ -162,7 +188,7 @@ function harmonic({base=27.5, size=100, shape=[1,100]}){
   for(var x = 0; x < size; x++){
     y[x] = base * Math.pow(2, x/12)
   }
-  return tf.tensor(y, shape)
+  return tf.tensor(y, [1, size])
 }
 
 function tautime(z, sr){
@@ -172,14 +198,14 @@ function tautime(z, sr){
 
 function dft(t, f){
   let y = tf.neg(t.matMul(f))
-  let s = tf.sin(y)
-  let c = tf.cos(y)
+  let s = tf.sin(y)//.add(scalar(5))
+  let c = tf.cos(y)//.add(scalar(5))//.abs()
   let sin = $ => $.matMul(s)
   let cos = $ => $.matMul(c)
   return {cos, sin}
 
 }
-
+/*
 function dft(t, f){
   var y = tf.neg(t.matMul(f))
   let sin = $ => $.matMul(tf.sin(y))
@@ -187,6 +213,7 @@ function dft(t, f){
   return {cos, sin}
 
 }
+*/
 function jsdft(x, k, sr){
    
   let y = x.map((e,i)=>[e*Math.cos(-(Math.PI * 2 * i * k / sr)), e*Math.sin(-(Math.PI * 2 * k * i /sr))])
@@ -198,7 +225,7 @@ function createRollMatrix(s, t){
   return roll(s, t)
 
   function roll(s, t){ 
-    l = s * s
+    let l = s * s
     var one = t > 0 ? rollRightOne(l) : rollLeftOne(Math.abs(l))
     var rm = tf.eye(Math.sqrt(l))
     for(var x = 0; x < Math.abs(t); x++){

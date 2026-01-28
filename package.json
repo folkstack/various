@@ -19,6 +19,7 @@
   "license": "see LICENSE",
   "dependencies": {
     "@tensorflow/tfjs": "^0.11.6",
+    "@tensorflow/tfjs-node": "^4.21.0",
     "@tensorflow/tfjs-node-gpu": "^0.1.9",
     "arraybuffer-to-buffer": "0.0.4",
     "ascjsify": "^1.0.0",
@@ -28,6 +29,5 @@
     "klaw-sync": "^4.0.0",
     "math-random": "^1.0.1",
     "typedarray-to-buffer": "^3.1.5"
-  },
-  "devDependencies": {}
+  }
 }

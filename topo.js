@@ -46,7 +46,8 @@ function rnn({input_shape, layers, depth=3, mag=.1, input=undefined, ortho=false
     let fn = a
 
 
-
+    // probably ought to concat feedback rather than add
+    // indeed concat before the matmul layer
     return function(input, train=false){
       var output = fn(input, train).matMul(layer)
       if(train){
@@ -63,7 +64,7 @@ function rnn({input_shape, layers, depth=3, mag=.1, input=undefined, ortho=false
       } // else if generate, sum the feedbacks to gen_count dimensions each 
       else{ // take mean of feedback and splash it onto n input samples
         var fb = feedback.map((e,i) => e.matMul(fb_w[i]))
-        var prev = fb.reduce((a, e) => tf.mean(tf.sigmoid(e.add(a)), scalar_zero), 1)
+        var prev = fb.reduce((a, e) => tf.mean(tf.sigmoid(e.add(a)), 0), scalar_zero)
         output = output.add(prev)
         $.dispose([feedback[0]]) 
         feedback.shift()
